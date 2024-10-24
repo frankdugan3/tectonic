@@ -1,3 +1,9 @@
+[![hex.pm](https://img.shields.io/hexpm/l/tectonic.svg)](https://hex.pm/packages/tectonic)
+[![hex.pm](https://img.shields.io/hexpm/v/tectonic.svg)](https://hex.pm/packages/tectonic)
+[![Documentation](https://img.shields.io/badge/documentation-gray)](https://hexdocs.pm/tectonic)
+[![hex.pm](https://img.shields.io/hexpm/dt/tectonic.svg)](https://hex.pm/packages/tectonic)
+[![github.com](https://img.shields.io/github/last-commit/frankdugan3/tectonic.svg)](https://github.com/frankdugan3/tectonic)
+
 # Tectonic
 
 Mix tasks for installing and invoking [tectonic](https://tectonic-typesetting.github.io/), a modernized, complete, self-contained
