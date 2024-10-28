@@ -8,8 +8,9 @@ defmodule Tectonic.MixProject do
     [
       app: :tectonic,
       version: @version,
-      elixir: "~> 1.11",
+      elixir: "~> 1.17",
       deps: deps(),
+      docs: docs(),
       description: "Mix tasks for installing and invoking tectonic",
       package: [
         links: %{
@@ -18,14 +19,36 @@ defmodule Tectonic.MixProject do
         },
         licenses: ["MIT"]
       ],
-      docs: [
-        main: "Tectonic",
-        source_url: @source_url,
-        source_ref: "v#{@version}",
-        extras: ["CHANGELOG.md"]
-      ],
       aliases: [test: ["tectonic.install --if-missing", "test"]]
     ]
+  end
+
+  defp docs do
+    [
+      main: "about",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      extras: ["CHANGELOG.md"],
+      output: "doc",
+      extra_section: "Guides",
+      extras: extras()
+    ]
+  end
+
+  defp extras do
+    ordered =
+      [
+        {"documentation/about.md", [default: true]},
+        "documentation/tutorials/get-started.md",
+        "CHANGELOG.md"
+      ]
+
+    unordered = Path.wildcard("documentation/**/*.{md,cheatmd,livemd}")
+
+    Enum.uniq_by(ordered ++ unordered, fn
+      {file, _opts} -> file
+      file -> file
+    end)
   end
 
   def application do
@@ -38,9 +61,10 @@ defmodule Tectonic.MixProject do
 
   defp deps do
     [
-      {:git_ops, "~> 2.6.1", only: [:dev]},
+      {:ex_doc, ">= 0.0.0", only: :docs},
+      {:git_ops, "~> 2.6.1", only: :dev},
       {:castore, ">= 0.0.0"},
-      {:ex_doc, ">= 0.0.0", only: :docs}
+      {:igniter, "~> 0.3"}
     ]
   end
 end
