@@ -3,35 +3,23 @@ defmodule Tectonic do
   @latest_version "0.15.0"
 
   @moduledoc """
-  Tectonic is an installer and runner for [tectonic](https://tectonic-typesetting.github.io), a modernized, complete, self-contained
-  [TeX](https://en.wikipedia.org/wiki/TeX)/[LaTeX](https://www.latex-project.org/)
-  engine, powered by [XeTeX](http://xetex.sourceforge.net/) and
-  [TeXLive](https://www.tug.org/texlive/).
-
-  ## Profiles
-
-  You can define multiple tectonic profiles. By default, there is a
-  profile called `:default` which you can configure its args, current
-  directory and environment:
-
-      config :tectonic,
-        version: "#{@latest_version}",
-        default: [
-          args: ~w(
-            -X compile
-            --untrusted
-          )
-        ]
+  Tectonic is an installer and runner for the [Tectonic](https://tectonic-typesetting.github.io) typesetter. Refer to the [about page](about.md) for more details.
 
   ## Tectonic configuration
 
-  There are two global configurations for the tectonic application:
+  For profile configuration, see the [Get Started](get-started.md#profiles) guide.
+
+  There are several global configuration options for the tectonic application:
 
     * `:version` - the expected tectonic version
 
     * `:version_check` - whether to perform the version check or not.
-      Useful when you manage the tectonic executable with an external
-      tool (e.g. OS package manager)
+      Disable when you manage the tectonic executable with an external
+      tool (e.g. OS package manager). *Defaults to `true`.*
+
+    * `:ensure_installed` - whether to automatically install or not.
+      Useful when the package is required by your application runtime. *Defaults to `true`.*
+      **Note: Requires `version_check` to be `true`.**
 
     * `:cacerts_path` - the directory to find certificates for
       https connections
@@ -58,6 +46,8 @@ defmodule Tectonic do
   @doc false
   def start(_, _) do
     if Application.get_env(:tectonic, :version_check, true) do
+      ensure_installed? = Application.get_env(:tectonic, :ensure_installed?, true)
+
       unless Application.get_env(:tectonic, :version) do
         Logger.warning("""
         tectonic version is not configured. Please set it in your config files:
@@ -73,12 +63,33 @@ defmodule Tectonic do
           :ok
 
         {:ok, version} ->
-          Logger.warning("""
-          Outdated tectonic version. Expected #{configured_version}, got #{version}. \
-          Please run `mix tectonic.install` or update the version in your config files.\
-          """)
+          if ensure_installed? do
+            Logger.info("""
+            Automatically upgrading Tectonic to #{configured_version}. \
+            """)
+
+            install()
+          else
+            Logger.warning("""
+            Outdated tectonic version. Expected #{configured_version}, got #{version}. \
+            Please run `mix tectonic.install` or update the version in your config files.\
+            """)
+          end
 
         :error ->
+          if ensure_installed? do
+            Logger.info("""
+            Automatically installing Tectonic v#{configured_version}. \
+            """)
+
+            install()
+          else
+            Logger.warning("""
+            Tectonic is not installed. \
+            Please run `mix tectonic.install` to install it. \
+            """)
+          end
+
           :ok
       end
     end
@@ -144,8 +155,8 @@ defmodule Tectonic do
     path = bin_path()
 
     with true <- File.exists?(path),
-         {out, 0} <- System.cmd(path, ["--help"]),
-         [vsn] <- Regex.run(~r/tectonic v([^\s]+)/, out, capture: :all_but_first) do
+         {out, 0} <- System.cmd(path, ["--version"]),
+         [vsn] <- Regex.run(~r/tectonic (\d+.\d+.\d+)/, out, capture: :all_but_first) do
       {:ok, vsn}
     else
       _ -> :error
@@ -163,13 +174,9 @@ defmodule Tectonic do
     config = config_for!(profile)
     args = config[:args] || []
 
-    env =
-      config
-      |> Keyword.get(:env, %{})
-
     opts = [
       cd: config[:cd] || File.cwd!(),
-      env: env,
+      env: Keyword.get(config, :env, %{}),
       into: IO.stream(:stdio, :line),
       stderr_to_stdout: true
     ]
@@ -180,12 +187,29 @@ defmodule Tectonic do
   end
 
   @doc """
-  Installs, if not available, and then runs `tectonic`.
+  Whether or not the configured version is installed.
+  """
+  def configured_version_installed?() do
+    if File.exists?(bin_path()) do
+      case bin_version() do
+        {:ok, version} ->
+          version == configured_version()
+
+        _ ->
+          false
+      end
+    else
+      false
+    end
+  end
+
+  @doc """
+  Installs, if configured version not available, and then runs `tectonic`.
 
   Returns the same as `run/2`.
   """
   def install_and_run(profile, args) do
-    unless File.exists?(bin_path()) do
+    unless configured_version_installed?() do
       install()
     end
 

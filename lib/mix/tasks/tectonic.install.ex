@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Tectonic.Install do
 
     if opts[:runtime_config], do: Mix.Task.run("app.config")
 
-    if opts[:if_missing] && latest_version?() do
+    if opts[:if_missing] && !Tectonic.configured_version_installed?() do
       :ok
     else
       if function_exported?(Mix, :ensure_application!, 1) do
@@ -62,8 +62,41 @@ defmodule Mix.Tasks.Tectonic.Install do
     end
   end
 
-  defp latest_version?() do
-    version = Tectonic.configured_version()
-    match?({:ok, ^version}, Tectonic.bin_version())
+  @behaviour Igniter.Mix.Task
+
+  @impl Igniter.Mix.Task
+  @doc false
+  def installer?, do: true
+
+  @impl Igniter.Mix.Task
+  @doc false
+  def supports_umbrella?, do: false
+
+  @impl Igniter.Mix.Task
+  @doc false
+  def info(_argv, _parent), do: %Igniter.Mix.Task.Info{extra_args?: true}
+
+  @impl Igniter.Mix.Task
+  @doc false
+  def igniter(igniter, _argv) do
+    igniter
+    |> Igniter.Project.Config.configure(
+      "config.exs",
+      :tectonic,
+      [:version],
+      Tectonic.latest_version()
+    )
+    |> Igniter.Project.Config.configure(
+      "config.exs",
+      :tectonic,
+      [:compile, :args],
+      ~w(-X compile)
+    )
+    |> Igniter.Project.Config.configure(
+      "config.exs",
+      :tectonic,
+      [:compile, :env],
+      %{TECTONIC_UNTRUSTED_MODE: true}
+    )
   end
 end
