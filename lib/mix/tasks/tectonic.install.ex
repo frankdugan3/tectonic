@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Tectonic.Install do
 
     if opts[:runtime_config], do: Mix.Task.run("app.config")
 
-    if opts[:if_missing] && !Tectonic.configured_version_installed?() do
+    if opts[:if_missing] && Tectonic.configured_version_installed?() do
       :ok
     else
       if function_exported?(Mix, :ensure_application!, 1) do
