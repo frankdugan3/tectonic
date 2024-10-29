@@ -48,7 +48,7 @@ defmodule Tectonic do
     if Application.get_env(:tectonic, :version_check, true) do
       ensure_installed? = Application.get_env(:tectonic, :ensure_installed?, true)
 
-      unless Application.get_env(:tectonic, :version) do
+      if !Application.get_env(:tectonic, :version) do
         Logger.warning("""
         tectonic version is not configured. Please set it in your config files:
 
@@ -209,7 +209,7 @@ defmodule Tectonic do
   Returns the same as `run/2`.
   """
   def install_and_run(profile, args) do
-    unless configured_version_installed?() do
+    if !configured_version_installed?() do
       install()
     end
 
