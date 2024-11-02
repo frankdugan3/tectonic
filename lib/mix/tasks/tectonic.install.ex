@@ -22,7 +22,7 @@ defmodule Mix.Tasks.Tectonic.Install do
   @shortdoc "Installs Tectonic executable"
   @compile {:no_warn_undefined, Mix}
 
-  use Mix.Task
+  use Igniter.Mix.Task
 
   @impl true
   def run(args) do
@@ -61,20 +61,6 @@ defmodule Mix.Tasks.Tectonic.Install do
       Tectonic.install(base_url)
     end
   end
-
-  @behaviour Igniter.Mix.Task
-
-  @impl Igniter.Mix.Task
-  @doc false
-  def installer?, do: true
-
-  @impl Igniter.Mix.Task
-  @doc false
-  def supports_umbrella?, do: false
-
-  @impl Igniter.Mix.Task
-  @doc false
-  def info(_argv, _parent), do: %Igniter.Mix.Task.Info{extra_args?: true}
 
   @impl Igniter.Mix.Task
   @doc false
